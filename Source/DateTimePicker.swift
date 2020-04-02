@@ -78,6 +78,7 @@ public protocol DateTimePickerDelegate: AnyObject {
     public var highlightColor = UIColor(red: 0/255.0, green: 199.0/255.0, blue: 194.0/255.0, alpha: 1) {
         didSet {
             todayButton.setTitleColor(highlightColor, for: .normal)
+            doneButton.setTitleColor(highlightColor, for: .normal)
             colonLabel1.textColor = highlightColor
             colonLabel2.textColor = highlightColor
             dayCollectionView.reloadData()
@@ -92,7 +93,6 @@ public protocol DateTimePickerDelegate: AnyObject {
         didSet {
             dateTitleLabel.textColor = darkColor
             cancelButton.setTitleColor(darkColor.withAlphaComponent(0.5), for: .normal)
-            doneButton.backgroundColor = darkColor.withAlphaComponent(0.5)
             borderTopView.backgroundColor = darkColor.withAlphaComponent(0.2)
             borderBottomView.backgroundColor = darkColor.withAlphaComponent(0.2)
             separatorTopView.backgroundColor = darkColor.withAlphaComponent(0.2)
@@ -185,7 +185,7 @@ public protocol DateTimePickerDelegate: AnyObject {
     }
     
     /// custom title for reset time button, default to Today
-    public var todayButtonTitle = "Today" {
+    public var todayButtonTitle = "" {
         didSet {
             todayButton.setTitle(todayButtonTitle, for: .normal)
         }
@@ -443,7 +443,7 @@ public protocol DateTimePickerDelegate: AnyObject {
         
         // done button
         doneButton.setTitle(doneButtonTitle, for: .normal)
-        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.setTitleColor(highlightColor, for: .normal)
         doneButton.backgroundColor = doneBackgroundColor ?? darkColor.withAlphaComponent(0.5)
         doneButton.titleLabel?.font = customFontSetting.doneButtonFont
         doneButton.layer.cornerRadius = 3
