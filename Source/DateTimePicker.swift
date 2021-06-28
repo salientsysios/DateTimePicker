@@ -602,7 +602,7 @@ private extension DateTimePicker {
             guard let date = calendar.date(byAdding: days, to: fromDate) else {
                 break;
             }
-            if date.compare(toDate) == .orderedDescending {
+            if let distanceInDays = calendar.dateComponents([.day], from: date, to: toDate).day, distanceInDays < 0 {
                 break
             }
             dates.append(date)
