@@ -3,7 +3,6 @@ import PackageDescription
 
 let package = Package(
     name: "DateTimePicker",
-    defaultLocalization: "en",
     platforms: [
         .iOS(.v13),
     ],
