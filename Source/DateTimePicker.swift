@@ -8,7 +8,7 @@
 
 import UIKit
 
-public protocol DateTimePickerDelegate: class {
+public protocol DateTimePickerDelegate: AnyObject {
     func dateTimePicker(_ picker: DateTimePicker, didSelectDate: Date)
 }
 
@@ -153,6 +153,11 @@ public protocol DateTimePickerDelegate: class {
             if selectedDate == minimumDate || selectedDate == maximumDate {
                 resetTime()
             }
+            
+            if hapticFeedbackEnabled {
+                triggerHaptic()
+            }
+            
         }
     }
     
@@ -160,6 +165,7 @@ public protocol DateTimePickerDelegate: class {
         get {
             let formatter = DateFormatter()
             formatter.dateFormat = self.dateFormat
+            formatter.timeZone = self.timeZone
             return formatter.string(from: self.selectedDate)
         }
     }
@@ -242,8 +248,19 @@ public protocol DateTimePickerDelegate: class {
         }
     }
     
-    public var timeZone: TimeZone = .current
-    public var calendar: Calendar = .current
+    public var timeZone: TimeZone = .current {
+        didSet {
+            guard calendar.timeZone != timeZone else { return }
+            calendar.timeZone = timeZone
+        }
+    }
+    public var calendar: Calendar = .current {
+        didSet {
+            guard timeZone != calendar.timeZone else { return }
+            timeZone = calendar.timeZone
+        }
+    }
+    public var hapticFeedbackEnabled: Bool = true
     
     public var completionHandler: ((Date)->Void)?
     public var dismissHandler: (() -> Void)?
@@ -275,6 +292,7 @@ public protocol DateTimePickerDelegate: class {
     @IBOutlet private var contentViewHeight: NSLayoutConstraint!
     @IBOutlet private var separatorBottomViewWidth: NSLayoutConstraint!
     @IBOutlet private var separatorTopViewWidth: NSLayoutConstraint!
+    @IBOutlet private weak var doneButtonTopSpace: NSLayoutConstraint!
     
     private var modalCloseHandler: (() -> Void)?
     
@@ -288,17 +306,9 @@ public protocol DateTimePickerDelegate: class {
         }
     }
     
-    private static var resourceBundle: Bundle? {
-        let podBundle = Bundle(for: DateTimePicker.self)
-        guard let bundleURL = podBundle.url(forResource: "DateTimePicker", withExtension: "bundle") else {
-            return Bundle.main
-        }
-        return Bundle(url: bundleURL)
-    }
-    
     @objc open class func create(minimumDate: Date? = nil, maximumDate: Date? = nil) -> DateTimePicker {
          
-        guard let dateTimePicker = resourceBundle?.loadNibNamed("DateTimePicker", owner: nil, options: nil)?.first as? DateTimePicker else {
+        guard let dateTimePicker = Bundle.resource.loadNibNamed("DateTimePicker", owner: nil, options: nil)?.first as? DateTimePicker else {
             fatalError("Error loading nib")
         }
         dateTimePicker.minimumDate = minimumDate ?? Date(timeIntervalSinceNow: -3600 * 24 * 10)
@@ -376,7 +386,7 @@ public protocol DateTimePickerDelegate: class {
     private func configureView() {
         
         // content view
-        contentHeight = isDatePickerOnly ? 228 : isTimePickerOnly ? 230 : 330
+        contentHeight = isDatePickerOnly ? 244 : isTimePickerOnly ? 230 : 330
         
         contentView.layer.shadowColor = UIColor(white: 0, alpha: 0.3).cgColor
         contentView.layer.shadowOffset = CGSize(width: 0, height: -2.0)
@@ -418,7 +428,7 @@ public protocol DateTimePickerDelegate: class {
             layout.sectionInset = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
             layout.itemSize = CGSize(width: 75, height: 80)
         }
-        dayCollectionView.register(UINib(nibName: "FullDateCollectionViewCell", bundle: DateTimePicker.resourceBundle), forCellWithReuseIdentifier: "dateCell")
+        dayCollectionView.register(UINib(nibName: "FullDateCollectionViewCell", bundle: .resource), forCellWithReuseIdentifier: "dateCell")
         dayCollectionView.dataSource = self
         dayCollectionView.delegate = self
         dayCollectionView.isHidden = isTimePickerOnly
@@ -439,6 +449,11 @@ public protocol DateTimePickerDelegate: class {
         doneButton.layer.cornerRadius = 3
         doneButton.layer.masksToBounds = true
         doneButton.addTarget(self, action: #selector(DateTimePicker.donePicking(sender:)), for: .touchUpInside)
+        
+        // hide entire time view in date-only mode
+        timeView.isHidden = isDatePickerOnly
+        // extra bottom space for day view
+        doneButtonTopSpace.constant = isDatePickerOnly ? 16 : 0
         
         // hour table view
         hourTableView.rowHeight = 36
@@ -470,7 +485,7 @@ public protocol DateTimePickerDelegate: class {
         secondTableView.separatorStyle = .none
         secondTableView.delegate = self
         secondTableView.dataSource = self
-        secondTableView.isHidden = isDatePickerOnly || !includesSecond
+        secondTableView.isHidden = !includesSecond
         secondTableView.backgroundColor = .clear
         
         // am/pm table view
@@ -479,7 +494,7 @@ public protocol DateTimePickerDelegate: class {
         amPmTableView.separatorStyle = .none
         amPmTableView.delegate = self
         amPmTableView.dataSource = self
-        amPmTableView.isHidden = !is12HourFormat || isDatePickerOnly
+        amPmTableView.isHidden = !is12HourFormat
         amPmTableView.backgroundColor = .clear
         amPmTableView.contentInset = UIEdgeInsets(top: 41, left: 0, bottom: 41, right: 0)
         
@@ -488,13 +503,12 @@ public protocol DateTimePickerDelegate: class {
         colonLabel1.textColor = highlightColor
         colonLabel1.backgroundColor = .clear
         colonLabel1.textAlignment = .center
-        colonLabel1.isHidden = isDatePickerOnly
         
         colonLabel2.font = customFontSetting.colonLabelFont
         colonLabel2.textColor = highlightColor
         colonLabel2.backgroundColor = .clear
         colonLabel2.textAlignment = .center
-        colonLabel2.isHidden = isDatePickerOnly || !includesSecond
+        colonLabel2.isHidden = !includesSecond
         
         // time separators
         var separatorWidth: CGFloat = 0
@@ -509,9 +523,9 @@ public protocol DateTimePickerDelegate: class {
         }
         
         separatorTopView.backgroundColor = darkColor.withAlphaComponent(0.2)
-        separatorTopView.isHidden = isDatePickerOnly || isTimePickerOnly
+        separatorTopView.isHidden = isDatePickerOnly
         separatorBottomView.backgroundColor = darkColor.withAlphaComponent(0.2)
-        separatorBottomView.isHidden = isDatePickerOnly || isTimePickerOnly
+        separatorBottomView.isHidden = isDatePickerOnly
         
         separatorBottomViewWidth.constant = separatorWidth
         separatorTopViewWidth.constant = separatorWidth
@@ -522,6 +536,7 @@ public protocol DateTimePickerDelegate: class {
         
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/YYYY"
+        formatter.timeZone = self.timeZone
         for i in 0..<dates.count {
             let date = dates[i]
             if formatter.string(from: date) == formatter.string(from: selectedDate) {
@@ -619,6 +634,7 @@ private extension DateTimePicker {
     func updateCollectionView(to currentDate: Date) {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/YYYY"
+        formatter.timeZone = self.timeZone
         for i in 0..<dates.count {
             let date = dates[i]
             if formatter.string(from: date) == formatter.string(from: currentDate) {
@@ -645,5 +661,11 @@ private extension DateTimePicker {
     func setToday() {
         selectedDate = Date()
         resetTime()
+    }
+    
+    func triggerHaptic() {
+        let haptic = UINotificationFeedbackGenerator()
+        haptic.prepare()
+        haptic.notificationOccurred(.success)
     }
 }
