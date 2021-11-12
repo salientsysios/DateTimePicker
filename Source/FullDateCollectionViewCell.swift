@@ -29,10 +29,20 @@ class FullDateCollectionViewCell: UICollectionViewCell {
     
     override func awakeFromNib() {
         super.awakeFromNib()
+        
+        configureAccessibilities()
+
         contentView.backgroundColor = normalColor
         contentView.layer.cornerRadius = 3
         contentView.layer.masksToBounds = true
         contentView.layer.borderWidth = 1
+    }
+
+    private func configureAccessibilities() {
+        accessibilityIdentifier = "date_cell"
+        monthLabel.accessibilityIdentifier = "month_label"
+        dayLabel.accessibilityIdentifier = "date_label"
+        numberLabel.accessibilityIdentifier = "number_label"
     }
 
     override var isSelected: Bool {
