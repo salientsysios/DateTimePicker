@@ -41,16 +41,20 @@ extension DateTimePicker: UITableViewDataSource, UITableViewDelegate {
         cell.textLabel?.adjustsFontSizeToFitWidth = true
         // add module operation to set value same
         if tableView == amPmTableView {
+            cell.textLabel?.accessibilityIdentifier = "am_pm_label"
             cell.textLabel?.text = (indexPath.row == 0) ? "AM" : "PM"
         } else if tableView == minuteTableView {
+            cell.textLabel?.accessibilityIdentifier = "minute_label"
             if timeInterval == .default {
                 cell.textLabel?.text = String(format: "%02i", indexPath.row % 60)
             } else {
                 cell.textLabel?.text = String(format: "%02i", indexPath.row * timeInterval.rawValue)
             }
         } else if tableView == secondTableView {
+            cell.textLabel?.accessibilityIdentifier = "second_label"
             cell.textLabel?.text = String(format: "%02i", indexPath.row % 60)
         } else {
+            cell.textLabel?.accessibilityIdentifier = "hour_label"
             if is12HourFormat {
                 cell.textLabel?.text = String(format: "%02i", (indexPath.row % 12) + 1)
             } else {

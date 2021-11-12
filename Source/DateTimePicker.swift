@@ -315,6 +315,7 @@ public protocol DateTimePickerDelegate: AnyObject {
         dateTimePicker.maximumDate = maximumDate ?? Date(timeIntervalSinceNow: 3600 * 24 * 10)
         assert(dateTimePicker.minimumDate.compare(dateTimePicker.maximumDate) == .orderedAscending, "Minimum date should be earlier than maximum date")
         dateTimePicker.configureView()
+        dateTimePicker.configureAccessibilities()
         return dateTimePicker
     }
     
@@ -381,6 +382,18 @@ public protocol DateTimePickerDelegate: AnyObject {
         if !contentView.frame.contains(location) {
             dismissView(sender: nil)
         }
+    }
+
+    private func configureAccessibilities() {
+        accessibilityIdentifier = "datetime_picker"
+        dateTitleLabel.accessibilityIdentifier = "tilte_label"
+        cancelButton.accessibilityIdentifier = "cancel_button"
+        doneButton.accessibilityIdentifier = "done_button"
+        dayCollectionView.accessibilityIdentifier = "day_container"
+        hourTableView.accessibilityIdentifier = "hour_container"
+        minuteTableView.accessibilityIdentifier = "minute_container"
+        secondTableView.accessibilityIdentifier = "second_container"
+        amPmTableView.accessibilityIdentifier = "am_pm_container"
     }
     
     private func configureView() {
